@@ -39,8 +39,7 @@ class Form(StatesGroup):
 async def get_cats_image():
     async with aiohttp.ClientSession() as session:
         async with session.get(CATS_URL, allow_redirects=True) as response:
-            cat_image = await response.read()
-            return cat_image
+            return await response.read()
 
 
 @dp.message_handler(state='*', commands='start')
