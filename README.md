@@ -1,3 +1,6 @@
+Workflow status
+![workflow](https://github.com/Darya-Kuzmich/telegram-bot-translator/actions/workflows/bot-workflow.yml/badge.svg)
+
 # Telegram Bot Translator
 ```
 Версия 1.0 (skeleton)
