@@ -10,6 +10,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.utils.emoji import emojize
 from aiogram.utils import executor
+from aiogram.contrib.middlewares.logging import LoggingMiddleware
 
 from translators import get_translate_ru_to_en, get_translate_en_to_ru
 
@@ -25,6 +26,8 @@ CATS_URL = 'https://loremflickr.com/320/240'
 bot_translator = Bot(token=TRANSLATE_BOT_TELEGRAM_TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(bot_translator, storage=storage)
+
+dp.middleware.setup(LoggingMiddleware())
 
 
 class Form(StatesGroup):
@@ -64,7 +67,7 @@ async def help_handler(message: types.Message, state: FSMContext):
         md.text(
             md.text('/start- запуск Бота.'),
             md.text('/help - список команд.'),
-            md.text('/cancel - сбросить состояние.'),
+            md.text('/cancel - отменить выбор.'),
             md.text('/translate - начать перевод.'),
             md.text('/cats - котики.'),
             sep='\n'
@@ -82,7 +85,7 @@ async def cancel_handler(message: types.Message, state: FSMContext):
         return
 
     await state.finish()
-    await message.answer('Сброшено',
+    await message.answer('Начать сначала /start, /help',
                          reply_markup=types.ReplyKeyboardRemove())
 
 
