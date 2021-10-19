@@ -49,6 +49,7 @@ async def send_welcome(message: types.Message):
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
     markup.add('Нужно кое-что перевести.')
     markup.add('Покажи котика!')
+    markup.add('/help')
 
     await Form.first_choice.set()
     await message.answer(
@@ -81,7 +82,8 @@ async def cancel_handler(message: types.Message, state: FSMContext):
 
     current_state = await state.get_state()
     if current_state is None:
-        return
+        return await bot_translator.send_message(
+            message.chat.id, 'Начать сначала /start, /help')
 
     await state.finish()
     await message.answer('Начать сначала /start, /help',
@@ -101,9 +103,14 @@ async def process_first_choice_invalid(message: types.Message):
 @dp.message_handler(lambda message: message.text == 'Покажи котика!',
                     state=Form.first_choice)
 async def send_cat_image(message: types.Message, state: FSMContext):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
+    markup.add('/help')
+    markup.add('/cats')
+    markup.add('/translate')
     await state.update_data(first_choice=message.text)
     image = await get_cats_image()
-    await bot_translator.send_photo(message.chat.id, image, caption='Котик')
+    await bot_translator.send_photo(message.chat.id, image, caption='Котик',
+                                    reply_markup=markup)
 
 
 @dp.message_handler(state='*', commands='translate')
@@ -116,6 +123,7 @@ async def choice_translation_language(message: types.Message,
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
     markup.add('русский >> английский')
     markup.add('английский >> русский')
+    markup.add('/help', '/cats')
 
     await state.finish()
     await Form.language_choice.set()
@@ -136,17 +144,25 @@ async def process_language_choice_invalid(message: types.Message):
     message.text == 'русский >> английский' or 'английский >> русский',
     state=Form.language_choice)
 async def process_translate(message: types.Message, state: FSMContext):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
+    markup.add('/help')
+    markup.add('/cats')
+    markup.add('/translate')
     await state.update_data(language_choice=message.text)
     async with state.proxy() as data:
         data['language'] = message.text
 
     await Form.text_to_translate.set()
     await message.answer('Отличный выбор!\nВведи текст.',
-                         reply_markup=types.ReplyKeyboardRemove())
+                         reply_markup=markup)
 
 
 @dp.message_handler(state=Form.text_to_translate)
 async def send_translate_text(message: types.Message, state: FSMContext):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
+    markup.add('/help')
+    markup.add('/cats')
+    markup.add('/translate')
     async with state.proxy() as data:
         data['text'] = message.text
 
@@ -155,12 +171,16 @@ async def send_translate_text(message: types.Message, state: FSMContext):
     else:
         translated_text = get_translate_en_to_ru(data['text'])
 
-    await message.answer(translated_text)
+    await message.answer(translated_text, reply_markup=markup)
 
 
 @dp.message_handler()
 async def process_message_out_of_state(message: types.Message):
-    await message.answer(emojize(':yum:'))
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
+    markup.add('/help')
+    markup.add('/cats')
+    markup.add('/translate')
+    await message.answer(emojize(':yum:'), reply_markup=markup)
 
 
 if __name__ == '__main__':
